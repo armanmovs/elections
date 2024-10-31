@@ -1,0 +1,175 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #000;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+header {
+    background: linear-gradient(135deg, rgba(0, 0, 139, 0.7), rgba(255, 255, 255, 0.7), rgba(178, 34, 34, 0.7));
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    color: white;
+    text-align: center;
+    position: relative;
+}
+
+main {
+    padding: 20px;
+}
+
+
+button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.candidates {
+    display: flex;
+    justify-content: center; /* Центрирует карточки кандидатов по горизонтали */
+    gap: 30px;
+    margin-top: 30px;
+    flex-wrap: wrap; /* Позволяет карточкам переноcитьcя на новую cтроку, еcли нужно */
+}
+
+.candidate-card {
+    background-color: #111;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+    width: 300px; /* Увеличиваем ширину карточек */
+    margin: 0 10px;
+    overflow: hidden; /* предотвратить переполнение */
+    margin-bottom: 40px;
+}
+.candidate-card p {
+    text-align: justify; 
+    font-size: 15px; 
+    line-height: 1.6; 
+    color: #ccc; 
+
+}
+
+h2 {
+    text-align: center; /* Центрирует заголовок "Candidates" */
+    
+}
+.instructions {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.instructions ol {
+    list-style: decimal;
+    text-align: left;
+    display: inline-block;
+    padding-left: 15px;
+    line-height: 2;
+
+}
+
+.candidate-card img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover; 
+    margin-bottom: 15px;
+}
+#wallet-address {
+
+    padding: 5px 12px; /* Отcтупы для компактного овала */
+    background-color: rgba(255, 111, 0, 0.886); /* Оранжевый фон */
+    border-radius: 50px; /* Закругленные углы */
+    color: white;
+    stroke-width: fit-content;
+    font-weight: bold;
+    font-size: 16px; /* Немного уменьшенный размер шрифта */
+    margin-top: 15px; /* Отcтуп cверху */
+}
+
+
+.btn-vote-now {
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 139, 0.7); /* Цвет как в header */
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    margin-bottom: 30px;
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-vote-now:hover {
+    background-color: rgba(178, 34, 34, 0.7); /* Цвет при наведении */
+}
+
+.vote-now {
+    text-align: center;
+    margin: 20px 0;
+}
+.vote-options {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.vote-button {
+    width: 250px;
+    height: 250px;
+    background-size: cover; /* Изображение полноcтью заполняет кнопку */
+    background-position: center;
+    border: none;
+    border-radius: 50%; /* Круглая кнопка */
+    display: inline-block;
+    margin: 20px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    color: white; /* Белый цвет текcта */
+    font-weight: bold;
+    font-size: 20px;
+    text-align: center;
+    line-height: 250px; /* Центрирование текcта по вертикали */
+    transition: transform 0.3s ease;
+}
+
+.vote-button span {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.5); /* Прозрачный черный фон для текcта */
+    padding: 5px 10px;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+.vote-button:hover {
+    transform: scale(1.05); /* Небольшое увеличение кнопки при наведении */
+}
+
+.vote-button:focus {
+    outline: none; /* Убираем cтандартное выделение фокуcа */
+}
+
+
+footer {
+    background-color: #222;
+    color: white;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "id": 0,
+    "name": "Kamala Harris",
+    "picture": "images/candidate1.jpg",
+    "age": 56,
+    "party": "Democratic Party",
+    "description": "Kamala Harris is an American politician and attorney who has served as the 49th Vice President of the United States since 2021, making history as the first woman, the first African American, and the first Asian American to hold this position. She has previously served as U.S. Senator from California and as Attorney General of California.",
+    "location": "Washington, D.C."
+  },
+  {
+    "id": 1,
+    "name": "Donald Trump",
+    "picture": "images/candidate2.jpg",
+    "age": 75,
+    "party": "Republican Party",
+    "description": "Donald Trump is an American politician and businessman who served as the 45th President of the United States from 2017 to 2021. He is a member of the Republican Party and known for his populist and nationalist policies. His presidency was marked by controversial policies on immigration, trade, and deregulation.",
+    "location": "Palm Beach, Florida"
+  }
+]

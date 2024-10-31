@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote Now - Elections 2024</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</head>
+
+<body>
+    <header>
+        <h1>Elections 2024</h1>
+        <p>Select your candidate and cast your vote</p>
+    </header>
+
+    <main>
+        <!-- Кнопки для голосования -->
+        <section class="vote-options">
+            <h2>Select Your Candidate:</h2>
+
+            <!-- Kamala Harris Vote Button -->
+            <button class="vote-button" data-candidate="0" data-candidate-name="Kamala Harris"
+                style="background-image: url('images/candidate1.jpg');">
+                <span>Vote for Kamala Harris</span>
+            </button>
+
+            <!-- Donald Trump Vote Button -->
+            <button class="vote-button" data-candidate="1" data-candidate-name="Donald Trump"
+                style="background-image: url('images/candidate2.jpg');">
+                <span>Vote for Donald Trump</span>
+            </button>
+
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 Blockchain Elections</p>
+    </footer>
+
+    <!-- Подключение Web3.js для работы с блокчейном -->
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js"></script>
+
+    <script>
+        const contractJson = 'VotingContract.json';
+
+        async function initContract() {
+            const response = await fetch(contractJson);
+            const contractData = await response.json();
+            const abi = contractData.abi;
+            const contractAddress = contractData.networks['5777'].address;
+
+            const web3 = new Web3(window.ethereum);
+            const contractInstance = new web3.eth.Contract(abi, contractAddress);
+
+            return contractInstance;
+        }
+
+        async function checkIfVoted() {
+            const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+            const account = accounts[0];
+
+            const contractInstance = await initContract();
+            try {
+                // Вызов метода hasVotedCheck из контракта
+                const hasVoted = await contractInstance.methods.hasVotedCheck(account).call();
+                if (hasVoted) {
+                    document.querySelectorAll('.vote-button').forEach(button => {
+                        button.textContent = "You have already voted";
+                        button.disabled = true;
+                    });
+                }
+            } catch (error) {
+                console.error("Error checking if voted:", error);
+            }
+        }
+
+
+        async function vote(candidateId, candidateName) {
+            try {
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                const account = accounts[0];
+
+                const contractInstance = await initContract();
+                await contractInstance.methods.vote(candidateId).send({ from: account });
+
+                alert(`You have successfully voted for ${candidateName}`);
+
+                // После голосования проверяем, голосовал ли пользователь и обновляем UI
+                checkIfVoted();
+            } catch (error) {
+                console.error('Voting error:', error);
+                alert('Voting failed. Please try again.');
+            }
+        }
+
+        // Обработчик клика по кнопкам голосования
+        document.querySelectorAll('.vote-button').forEach(button => {
+            button.addEventListener('click', function () {
+                const candidateId = this.getAttribute('data-candidate');
+                const candidateName = this.getAttribute('data-candidate-name'); // Get the candidate's name
+                vote(candidateId, candidateName); // Pass both ID and name to the vote function
+            });
+        });
+
+        // Check if user already voted when the page loads
+        $(function () {
+            $(document).ready(function () {
+                checkIfVoted(); // Проверяем голосовал ли пользователь сразу при загрузке страницы
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elections 2024</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <header>
+        <h1>Elections 2024</h1>
+        <p>Vote for your candidate using MetaMask</p>
+    </header>
+
+    <main>
+        <section class="meta-mask">
+            <button id="connect-button">Connect MetaMask</button>
+            <p id="wallet-address" style="display: none;">Your wallet: <span></span></p>
+        </section>
+
+        <section class="instructions">
+            <h2>How to Vote:</h2>
+            <ol>
+                <li>Connect your MetaMask wallet by clicking the button above.</li>
+                <li>Select a candidate and cast your vote.</li>
+                <li>Your vote will be recorded on the blockchain.</li>
+            </ol>
+        </section>
+
+        <section class="vote-now">
+            <button id="vote-now-button" class="btn-vote-now">Vote Now</button>
+        </section>
+
+        <section class="candidates">
+            <div class="candidate-card">
+                <img src="images/candidate1.jpg" alt="Candidate 1">
+                <h3>Kamala Harris</h3>
+                <p>Kamala Harris is an American politician and attorney who has served as the 49th Vice President of the
+                    United States since 2021, making history as the first woman, the first African American, and the
+                    first Asian American to hold this position. A member of the Democratic Party, Harris previously
+                    served as U.S. Senator from California from 2017 to 2021...</p>
+            </div>
+            <div class="candidate-card">
+                <img src="images/candidate2.jpg" alt="Candidate 2">
+                <h3>Donald Trump</h3>
+                <p>Donald Trump is an American politician who served as the 45th President of the United States from
+                    2017 to 2021. A member of the Republican Party, he pursued a populist and nationalist agenda,
+                    focusing on issues like immigration reform, trade protectionism, and deregulation...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 Blockchain Elections</p>
+    </footer>
+
+    <!-- Подключение Web3.js для работы с блокчейном -->
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js"></script>
+
+    <script>
+        // Проверка установки MetaMask и автоматическое подключение
+        window.addEventListener('load', async function () {
+            if (typeof window.ethereum !== 'undefined') {
+                console.log('MetaMask is installed!');
+
+                // Проверка, есть ли подключенный аккаунт
+                const accounts = await ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    const account = accounts[0];
+                    document.getElementById('wallet-address').style.display = 'block';
+                    document.getElementById('wallet-address').querySelector('span').textContent = account;
+                    console.log('Connected account:', account);
+                }
+            } else {
+                alert('Please install MetaMask to use this feature.');
+            }
+        });
+
+        // Подключение к MetaMask
+        async function connectMetaMask() {
+            if (window.ethereum) {
+                try {
+                    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                    const account = accounts[0];
+                    document.getElementById('wallet-address').style.display = 'block';
+                    document.getElementById('wallet-address').querySelector('span').textContent = account;
+                    console.log('Connected account:', account);
+                } catch (error) {
+                    console.error('Error connecting to MetaMask', error);
+                }
+            } else {
+                alert('MetaMask not detected. Please install MetaMask.');
+            }
+        }
+
+        // Обработчик клика по кнопке Connect MetaMask
+        document.getElementById('connect-button').addEventListener('click', connectMetaMask);
+
+        // Обработчик клика по кнопке Vote Now
+        document.getElementById('vote-now-button').addEventListener('click', function () {
+            const walletAddress = document.getElementById('wallet-address').querySelector('span').textContent;
+            if (!walletAddress) {
+                alert('Please connect your MetaMask wallet before voting.');
+                return;
+            }
+            window.location.href = 'vote.html'; // Переброска на страницу vote.html
+        });
+    </script>
+
+</body>
+
+</html>
