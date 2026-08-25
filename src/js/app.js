@@ -25,7 +25,7 @@ App = {
     },
 
     initContract: function () {
-        $.getJSON('VotingContract.json', function (data) {
+        $.getJSON('Voting.json', function (data) {
             var VotingArtifact = data;
             App.contracts.Voting = TruffleContract(VotingArtifact);
             App.contracts.Voting.setProvider(App.web3Provider);
@@ -95,7 +95,7 @@ App = {
                 return;
             }
 
-            await instance.vote(candidateId, { from: account });
+            await instance.castVote(candidateId, { from: account });
             alert(`Successfully voted for candidate ${candidateId}`);
             await App.loadCandidates(); // Reload candidates after voting
         } catch (err) {

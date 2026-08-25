@@ -4,112 +4,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vote Now - Elections 2024</title>
+    <title>Vote Now - Elections 2026</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 </head>
 
 <body>
     <header>
-        <h1>Elections 2024</h1>
+        <h1>Elections 2026</h1>
         <p>Select your candidate and cast your vote</p>
     </header>
 
     <main>
-        <!-- Кнопки для голосования -->
+        <div id="walletBanner" class="status-banner" aria-live="polite"></div>
+
         <section class="vote-options">
             <h2>Select Your Candidate:</h2>
 
-            <!-- Kamala Harris Vote Button -->
-            <button class="vote-button" data-candidate="0" data-candidate-name="Kamala Harris"
-                style="background-image: url('images/candidate1.jpg');">
-                <span>Vote for Kamala Harris</span>
-            </button>
+            <div class="vote-grid">
+                <div class="vote-card">
+                    <button class="vote-button" data-candidate="0" data-candidate-name="Kamala Harris"
+                        data-default-label="Vote for Kamala Harris"
+                        aria-label="Vote for Kamala Harris"
+                        style="background-image: url('images/candidate1.jpg');"></button>
+                    <h3 class="candidate-name">Kamala Harris</h3>
+                    <p class="party-tag">Democratic Party</p>
+                    <p class="vote-count" data-candidate-count="0">— votes</p>
+                    <p class="vote-status" data-candidate-status="0"></p>
+                </div>
 
-            <!-- Donald Trump Vote Button -->
-            <button class="vote-button" data-candidate="1" data-candidate-name="Donald Trump"
-                style="background-image: url('images/candidate2.jpg');">
-                <span>Vote for Donald Trump</span>
-            </button>
-
+                <div class="vote-card">
+                    <button class="vote-button" data-candidate="1" data-candidate-name="Donald Trump"
+                        data-default-label="Vote for Donald Trump"
+                        aria-label="Vote for Donald Trump"
+                        style="background-image: url('images/candidate2.jpg');"></button>
+                    <h3 class="candidate-name">Donald Trump</h3>
+                    <p class="party-tag">Republican Party</p>
+                    <p class="vote-count" data-candidate-count="1">— votes</p>
+                    <p class="vote-status" data-candidate-status="1"></p>
+                </div>
+            </div>
         </section>
     </main>
 
+    <div id="voteSuccessModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true"
+        aria-labelledby="modalTitle" aria-describedby="modalMessage">
+        <div class="modal-box">
+            <div class="modal-check" aria-hidden="true">&#10003;</div>
+            <h3 id="modalTitle">Vote recorded!</h3>
+            <p id="modalMessage"></p>
+            <button id="modalCloseBtn">Close</button>
+        </div>
+    </div>
+
+    <div id="errorToast" class="toast" role="alert"></div>
+
     <footer>
-        <p>© 2024 Blockchain Elections</p>
+        <p>© 2026 Blockchain Elections</p>
     </footer>
 
-    <!-- Подключение Web3.js для работы с блокчейном -->
+    <!-- Load Web3.js for blockchain interaction -->
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js"></script>
+    <script src="js/site.js"></script>
 
     <script>
-        const contractJson = 'VotingContract.json';
+        let walletStatus = { status: 'no-metamask' };
+        let toastTimer = null;
 
-        async function initContract() {
-            const response = await fetch(contractJson);
-            const contractData = await response.json();
-            const abi = contractData.abi;
-            const contractAddress = contractData.networks['5777'].address;
+        async function refreshWalletBanner() {
+            walletStatus = await detectWalletStatus();
+            renderStatusBanner(document.getElementById('walletBanner'), walletStatus, connectWallet);
+        }
 
-            const web3 = new Web3(window.ethereum);
-            const contractInstance = new web3.eth.Contract(abi, contractAddress);
+        async function connectWallet() {
+            if (!window.ethereum) {
+                window.open('https://metamask.io/download/', '_blank');
+                return;
+            }
+            try {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+            } catch (error) {
+                console.error('Error connecting to MetaMask', error);
+            }
+            await refreshWalletBanner();
+        }
 
-            return contractInstance;
+        function showToast(message) {
+            const toast = document.getElementById('errorToast');
+            toast.textContent = message;
+            toast.classList.add('is-visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 4000);
+        }
+
+        function showSuccessModal(candidateName) {
+            document.getElementById('modalMessage').textContent = `You have successfully voted for ${candidateName}.`;
+            const modal = document.getElementById('voteSuccessModal');
+            modal.style.display = 'flex';
+            document.getElementById('modalCloseBtn').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('voteSuccessModal').style.display = 'none';
+        }
+
+        document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        async function loadVoteCounts() {
+            try {
+                const { contract } = await getContractRead();
+                const candidates = await contract.methods.getCandidates().call();
+                candidates.forEach((candidate, id) => {
+                    const el = document.querySelector(`.vote-count[data-candidate-count="${id}"]`);
+                    if (el) el.textContent = `${candidate.voteCount} votes`;
+                });
+            } catch (error) {
+                console.error('Error loading vote counts:', error);
+            }
         }
 
         async function checkIfVoted() {
-            const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-            const account = accounts[0];
-
-            const contractInstance = await initContract();
+            if (walletStatus.status !== 'connected') return;
             try {
-                // Вызов метода hasVotedCheck из контракта
-                const hasVoted = await contractInstance.methods.hasVotedCheck(account).call();
+                const { contract } = await getContractWrite();
+                const hasVoted = await contract.methods.hasVotedCheck(walletStatus.account).call();
                 if (hasVoted) {
-                    document.querySelectorAll('.vote-button').forEach(button => {
-                        button.textContent = "You have already voted";
-                        button.disabled = true;
+                    document.querySelectorAll('.vote-button').forEach((button) => {
+                        setVoteButtonState(button, 'voted', 'You have already voted');
                     });
                 }
             } catch (error) {
-                console.error("Error checking if voted:", error);
+                console.error('Error checking if voted:', error);
             }
         }
 
+        async function vote(button) {
+            const candidateId = button.getAttribute('data-candidate');
+            const candidateName = button.getAttribute('data-candidate-name');
 
-        async function vote(candidateId, candidateName) {
+            if (walletStatus.status !== 'connected') {
+                await connectWallet();
+                if (walletStatus.status !== 'connected') return;
+            }
+
+            setVoteButtonState(button, 'pending');
+
             try {
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                const account = accounts[0];
+                const { contract } = await getContractWrite();
+                await contract.methods.castVote(candidateId).send({ from: walletStatus.account });
 
-                const contractInstance = await initContract();
-                await contractInstance.methods.vote(candidateId).send({ from: account });
+                setVoteButtonState(button, 'voted', `You voted for ${candidateName}`);
+                showSuccessModal(candidateName);
 
-                alert(`You have successfully voted for ${candidateName}`);
-
-                // После голосования проверяем, голосовал ли пользователь и обновляем UI
-                checkIfVoted();
+                document.querySelectorAll('.vote-button').forEach((btn) => {
+                    if (btn !== button) setVoteButtonState(btn, 'voted', 'Voting closed — you voted already');
+                });
+                loadVoteCounts();
             } catch (error) {
                 console.error('Voting error:', error);
-                alert('Voting failed. Please try again.');
+                setVoteButtonState(button, 'error');
+                showToast(describeTxError(error));
+                setTimeout(() => setVoteButtonState(button, 'idle'), 1600);
             }
         }
 
-        // Обработчик клика по кнопкам голосования
-        document.querySelectorAll('.vote-button').forEach(button => {
-            button.addEventListener('click', function () {
-                const candidateId = this.getAttribute('data-candidate');
-                const candidateName = this.getAttribute('data-candidate-name'); // Get the candidate's name
-                vote(candidateId, candidateName); // Pass both ID and name to the vote function
-            });
+        document.querySelectorAll('.vote-button').forEach((button) => {
+            setVoteButtonState(button, 'idle');
+            button.addEventListener('click', () => vote(button));
         });
 
-        // Check if user already voted when the page loads
-        $(function () {
-            $(document).ready(function () {
-                checkIfVoted(); // Проверяем голосовал ли пользователь сразу при загрузке страницы
-            });
+        window.addEventListener('load', async () => {
+            await refreshWalletBanner();
+            await checkIfVoted();
+            loadVoteCounts();
+
+            if (window.ethereum) {
+                window.ethereum.on('accountsChanged', async () => {
+                    await refreshWalletBanner();
+                    document.querySelectorAll('.vote-button').forEach((b) => setVoteButtonState(b, 'idle'));
+                    await checkIfVoted();
+                });
+                window.ethereum.on('chainChanged', () => window.location.reload());
+            }
         });
     </script>
 </body>

@@ -4,26 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elections 2024</title>
+    <title>Elections 2026</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
     <header>
-        <h1>Elections 2024</h1>
+        <h1>Elections 2026</h1>
         <p>Vote for your candidate using MetaMask</p>
     </header>
 
     <main>
-        <section class="meta-mask">
-            <button id="connect-button">Connect MetaMask</button>
-            <p id="wallet-address" style="display: none;">Your wallet: <span></span></p>
-        </section>
+        <div id="walletBanner" class="status-banner" aria-live="polite"></div>
 
         <section class="instructions">
             <h2>How to Vote:</h2>
             <ol>
-                <li>Connect your MetaMask wallet by clicking the button above.</li>
+                <li>Connect your MetaMask wallet.</li>
                 <li>Select a candidate and cast your vote.</li>
                 <li>Your vote will be recorded on the blockchain.</li>
             </ol>
@@ -35,77 +32,84 @@
 
         <section class="candidates">
             <div class="candidate-card">
-                <img src="images/candidate1.jpg" alt="Candidate 1">
+                <img src="images/candidate1.jpg" alt="Kamala Harris">
                 <h3>Kamala Harris</h3>
+                <span class="party-tag">Democratic Party</span>
                 <p>Kamala Harris is an American politician and attorney who has served as the 49th Vice President of the
                     United States since 2021, making history as the first woman, the first African American, and the
                     first Asian American to hold this position. A member of the Democratic Party, Harris previously
                     served as U.S. Senator from California from 2017 to 2021...</p>
+                <span class="vote-count-badge" data-candidate-count="0">— votes</span>
             </div>
             <div class="candidate-card">
-                <img src="images/candidate2.jpg" alt="Candidate 2">
+                <img src="images/candidate2.jpg" alt="Donald Trump">
                 <h3>Donald Trump</h3>
+                <span class="party-tag">Republican Party</span>
                 <p>Donald Trump is an American politician who served as the 45th President of the United States from
                     2017 to 2021. A member of the Republican Party, he pursued a populist and nationalist agenda,
                     focusing on issues like immigration reform, trade protectionism, and deregulation...</p>
+                <span class="vote-count-badge" data-candidate-count="1">— votes</span>
             </div>
         </section>
     </main>
 
     <footer>
-        <p>© 2024 Blockchain Elections</p>
+        <p>© 2026 Blockchain Elections</p>
     </footer>
 
-    <!-- Подключение Web3.js для работы с блокчейном -->
+    <!-- Load Web3.js for blockchain interaction -->
     <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js"></script>
+    <script src="js/site.js"></script>
 
     <script>
-        // Проверка установки MetaMask и автоматическое подключение
-        window.addEventListener('load', async function () {
-            if (typeof window.ethereum !== 'undefined') {
-                console.log('MetaMask is installed!');
+        let walletStatus = { status: 'no-metamask' };
 
-                // Проверка, есть ли подключенный аккаунт
-                const accounts = await ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    const account = accounts[0];
-                    document.getElementById('wallet-address').style.display = 'block';
-                    document.getElementById('wallet-address').querySelector('span').textContent = account;
-                    console.log('Connected account:', account);
-                }
-            } else {
-                alert('Please install MetaMask to use this feature.');
+        async function refreshWalletBanner() {
+            walletStatus = await detectWalletStatus();
+            renderStatusBanner(document.getElementById('walletBanner'), walletStatus, connectWallet);
+        }
+
+        async function connectWallet() {
+            if (!window.ethereum) {
+                window.open('https://metamask.io/download/', '_blank');
+                return;
             }
-        });
+            try {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+            } catch (error) {
+                console.error('Error connecting to MetaMask', error);
+            }
+            await refreshWalletBanner();
+        }
 
-        // Подключение к MetaMask
-        async function connectMetaMask() {
-            if (window.ethereum) {
-                try {
-                    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                    const account = accounts[0];
-                    document.getElementById('wallet-address').style.display = 'block';
-                    document.getElementById('wallet-address').querySelector('span').textContent = account;
-                    console.log('Connected account:', account);
-                } catch (error) {
-                    console.error('Error connecting to MetaMask', error);
-                }
-            } else {
-                alert('MetaMask not detected. Please install MetaMask.');
+        async function loadCandidateCounts() {
+            try {
+                const { contract } = await getContractRead();
+                const candidates = await contract.methods.getCandidates().call();
+                candidates.forEach((candidate, id) => {
+                    const el = document.querySelector(`.vote-count-badge[data-candidate-count="${id}"]`);
+                    if (el) el.textContent = `${candidate.voteCount} votes`;
+                });
+            } catch (error) {
+                console.error('Error loading vote counts:', error);
             }
         }
 
-        // Обработчик клика по кнопке Connect MetaMask
-        document.getElementById('connect-button').addEventListener('click', connectMetaMask);
-
-        // Обработчик клика по кнопке Vote Now
-        document.getElementById('vote-now-button').addEventListener('click', function () {
-            const walletAddress = document.getElementById('wallet-address').querySelector('span').textContent;
-            if (!walletAddress) {
-                alert('Please connect your MetaMask wallet before voting.');
-                return;
+        document.getElementById('vote-now-button').addEventListener('click', async function () {
+            if (walletStatus.status !== 'connected') {
+                await connectWallet();
+                if (walletStatus.status !== 'connected') return;
             }
-            window.location.href = 'vote.html'; // Переброска на страницу vote.html
+            window.location.href = 'vote.html';
+        });
+
+        window.addEventListener('load', () => {
+            refreshWalletBanner();
+            loadCandidateCounts();
+            if (window.ethereum) {
+                window.ethereum.on('accountsChanged', refreshWalletBanner);
+                window.ethereum.on('chainChanged', () => window.location.reload());
+            }
         });
     </script>
 
